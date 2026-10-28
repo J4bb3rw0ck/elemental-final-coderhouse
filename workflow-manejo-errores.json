@@ -1,0 +1,135 @@
+{
+  "name": "Elemental Tulum - Manejo de errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e5000000-0000-4000-8000-000000000001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0",
+              "name": "email_admin",
+              "value": "admin@tu-dominio.com",
+              "type": "string"
+            },
+            {
+              "id": "a1",
+              "name": "workflow",
+              "value": "={{ $json.workflow?.name || 'desconocido' }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "nodo_fallido",
+              "value": "={{ $json.execution?.lastNodeExecuted || 'desconocido' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "error",
+              "value": "={{ $json.execution?.error?.message || 'sin mensaje' }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "url_ejecucion",
+              "value": "={{ $json.execution?.url || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "fecha",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5000000-0000-4000-8000-000000000002",
+      "name": "Formatear error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email_admin }}",
+        "subject": "=Falla en n8n: {{ $json.workflow }} ({{ $json.nodo_fallido }})",
+        "emailType": "text",
+        "message": "=El workflow {{ $json.workflow }} falló el {{ $json.fecha }}.\n\nNodo: {{ $json.nodo_fallido }}\nError: {{ $json.error }}\nEjecución: {{ $json.url_ejecucion }}\n\nRevisar si hay mensajes de WhatsApp sin responder.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e5000000-0000-4000-8000-000000000003",
+      "name": "Gmail: alerta de falla",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        0
+      ],
+      "webhookId": "a1b2c3d4-0005-4000-8000-000000000005"
+    },
+    {
+      "parameters": {
+        "content": "## Workflow de errores\nSe asigna en Settings > Error workflow del flujo principal. Captura cualquier falla no prevista (por ejemplo, credenciales vencidas o un error inesperado en un nodo) y avisa por correo con el nodo y el enlace a la ejecución.",
+        "height": 300,
+        "width": 680,
+        "color": 3
+      },
+      "id": "e5000000-0000-4000-8000-000000000004",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -180
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Formatear error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear error": {
+      "main": [
+        [
+          {
+            "node": "Gmail: alerta de falla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Mexico_City"
+  },
+  "active": false
+}
